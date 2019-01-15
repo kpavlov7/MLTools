@@ -1,1 +1,3 @@
 # MLTools
+
+*MLTools* is a small library, using only *C#* primitives and containing implementations of the clustering algorithms *K-Means* and *Self Organizing Maps*. These clustering algorithms are using for training dataset in form of Instance Representatiion. The Instance Representations is suited to encode efficiently also sparse data. There is also implementation of Feature Representation which enventually will be used in other models for regression and classification. The implementation of the algorithms are kept dry using only for-loops and simple arrays on purpose, so that they are fast and compact. Alongside with machine learning algorithms they are numerical implementations of various distributios such as *Chi* and *Gaussian*. 
