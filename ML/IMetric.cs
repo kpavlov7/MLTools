@@ -1,6 +1,6 @@
-﻿using static Benchmark.Metrics;
+﻿using static ML.Metrics;
 
-namespace Benchmark
+namespace ML
 {
     /// <summary>
     /// The Metric is used for assessing the performance of

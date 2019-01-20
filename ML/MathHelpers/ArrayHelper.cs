@@ -222,47 +222,38 @@ namespace ML.MathHelpers
         /// <summary>
         /// https://stackoverflow.com/questions/273313/randomize-a-listt
         /// </summary>
-        public static void Shuffle<T>(this IList<T> array, Random rnd)
+        public static void Shuffle<T>(this IList<T> array, Random random)
         {
             var n = array.Count;
             while (n > 1)
             {
                 n--;
-                int k = rnd.Next(n + 1);
+                int k = random.Next(n + 1);
                 T value = array[k];
                 array[k] = array[n];
                 array[n] = value;
             }
         }
 
-        public static T[] SampleNoReplacement<T>(this T[] array, int count, Random rnd)
+        public static T[] SampleNoReplacement<T>(this T[] array, int count, Random random)
         {
+            Shuffle(array, random);
+
             if (count >= array.Length)
             {
                 return array;
             }
 
-            var copy = new T[array.Length];
-
-            Array.Copy(array, copy, copy.Length);
-
-            Shuffle(copy, rnd);
-
-            return copy.Take(count).ToArray();
+            return array.Take(count).ToArray();
         }
 
-        public static T[] SampleReplacement<T>(this T[] array, int count, Random rnd)
+        public static T[] SampleReplacement<T>(this T[] array, int count, Random random)
         {
-            if (count >= array.Length)
-            {
-                return array;
-            }
-
             var copy = new T[count];
             
             for(var i = 0; i < count; i++)
             {
-                copy[i] = array[rnd.Next(array.Length)];
+                copy[i] = array[random.Next(array.Length)];
             }
 
             return copy;
@@ -410,28 +401,28 @@ namespace ML.MathHelpers
         }
         #endregion
 
-        #region Tensor Arithmetical Operations
+        #region Matrix Flat Arithmetical Operations
         /// <summary>
-        /// Calculates the euclidean distance between a row in two dimensional tensor and an array.
+        /// Calculates the euclidean distance between a row in two dimensional matrix and an array.
         /// </summary>
         /// <param name="count"> 
         /// Dimesionality of the axis we are building the distance upon.
-        /// We have to be sure that 'count' doesn't exceed the dimensionality of 'tensor',
+        /// We have to be sure that 'count' doesn't exceed the dimensionality of 'matrix',
         /// because we don't access it within the method due to extra computation.</param>
         public static double L2Dist(
-            this float[,] tensor, IReadOnlyList<float> array, int index, int count)
+            this float[,] matrix, IReadOnlyList<float> array, int index, int count)
         {
             if (count != array.Count)
             {
                 throw new ArgumentException(
-                    "Array and tensor should have the same dimensionality along axis we are iterating over.");
+                    "Array and matrix should have the same dimensionality along axis we are iterating over.");
             }
             var dist = 0.0;
             float delta;
 
             for (var i = 0; i < count; i++)
             {
-                delta = tensor[index, i] - array[i];
+                delta = matrix[index, i] - array[i];
                 dist += delta * delta;
             }
 
@@ -439,47 +430,47 @@ namespace ML.MathHelpers
         }
 
         /// <summary>
-        /// Calculates the euclidean distance between two rows in two dimensional tensor.
+        /// Calculates the euclidean distance between two rows in two dimensional matrix.
         /// </summary>
         /// <param name="count"> 
         /// Dimesionality of the axis we are building the distance upon.
-        /// We have to be sure that 'count' doesn't exceed the dimensionality of 'tensor',
+        /// We have to be sure that 'count' doesn't exceed the dimensionality of 'matrix',
         /// because we don't access it within the method due to extra computation.</param>
         /// <returns></returns>
-        public static double L2Dist(this float[,] tensor, int index1, int index2, int count)
+        public static double L2Dist(this float[,] matrix, int index1, int index2, int count)
         {
             var dist = 0.0;
             float delta;
 
             for (var i = 0; i < count; i++)
             {
-                delta = tensor[index1, i] - tensor[index2, i];
+                delta = matrix[index1, i] - matrix[index2, i];
                 dist += delta * delta;
             }
 
             return Math.Sqrt(dist);
         }
 
-        public static float[] Plus(this float[,] tensor, IReadOnlyList<float> array, int index, int count)
+        public static float[] Plus(this float[,] matrix, IReadOnlyList<float> array, int index, int count)
         {
 
             if (count != array.Count)
             {
                 throw new ArgumentException(
-                    "Array and tensor should have the same dimensionality along axis we are iterating over.");
+                    "Array and matrix should have the same dimensionality along axis we are iterating over.");
             }
 
             var output = new float[count];
 
             for (var i = 0; i < count; i++)
             {
-                output[i] = tensor[index, i] + array[i];
+                output[i] = matrix[index, i] + array[i];
             }
 
             return output;
         }
 
-        public static float[] ReduceSum(this float[,] tensor, int[] dim, int keptAxis = 0)
+        public static float[] ReduceSum(this float[,] matrix, int[] dim, int keptAxis = 0)
         {
             var reducedAxis = keptAxis == 0 ? 1 : 0;
 
@@ -497,7 +488,7 @@ namespace ML.MathHelpers
                 {
                     for (int j = 0; j < dim[reducedAxis]; j++)
                     {
-                        output[i] = tensor[i, j];
+                        output[i] = matrix[i, j];
                     }
                 }
             }
@@ -507,7 +498,7 @@ namespace ML.MathHelpers
                 {
                     for (int j = 0; j < dim[reducedAxis]; j++)
                     {
-                        output[i] = tensor[j, i];
+                        output[i] = matrix[j, i];
                     }
                 }
             }
@@ -516,13 +507,13 @@ namespace ML.MathHelpers
         }
 
         /// <summary>
-        /// Calculate L1 norm of a 2D tensor in a ginven row;
+        /// Calculate L1 norm of a 2D matrix in a ginven row;
         /// </summary>
         /// <param name="count"> 
         /// Dimesionality of the axis we are building the distance upon.
-        /// We have to be sure that 'count' doesn't exceed the dimensionality of 'tensor',
+        /// We have to be sure that 'count' doesn't exceed the dimensionality of 'matrix',
         /// because we don't access it within the method due to extra computation.</param>
-        public static double L1Norm(this float[,] tensor, int index, int count)
+        public static double L1Norm(this float[,] matrix, int index, int count)
         {
 
             if (count == 0)
@@ -534,20 +525,20 @@ namespace ML.MathHelpers
 
             for (var i = 0; i < count; i++)
             {
-                norm += Math.Abs(tensor[index, i]);
+                norm += Math.Abs(matrix[index, i]);
             }
 
             return norm;
         }
 
         /// <summary>
-        /// Calculate the max of a 2D tensor in a given row;
+        /// Calculate the max of a 2D matrix in a given row;
         /// </summary>
         /// <param name="count"> 
         /// Dimesionality of the axis we are building the distance upon.
-        /// We have to be sure that 'count' doesn't exceed the dimensionality of 'tensor',
+        /// We have to be sure that 'count' doesn't exceed the dimensionality of 'matrix',
         /// because we don't access it within the method due to extra computation.</param>
-        public static double Max(this float[,] tensor, int index, int count)
+        public static double Max(this float[,] matrix, int index, int count)
         {
 
             if (count == 0)
@@ -559,10 +550,28 @@ namespace ML.MathHelpers
 
             for (var i = 0; i < count; i++)
             {
-                max = max < tensor[index, i] ? tensor[index, i] : max;
+                max = max < matrix[index, i] ? matrix[index, i] : max;
             }
 
             return max;
+        }
+
+        /// <summary>
+        /// Fills at certain row(index) of the matrix specified matrixs's span of between 'matrixOffset'
+        /// and 'matrixOffset + count' with the values of the analogical span from an array.
+        /// </summary>
+        public static void FillTensor(
+            this float[,] matrix,
+            int index,
+            int matrixOffset,
+            int arrayOffset,
+            int count,
+            float[] array)
+        {
+            for (var i = 0; i< count; i++)
+            {
+                matrix[index, i + matrixOffset] = array[i + arrayOffset];
+            }
         }
         #endregion
     }

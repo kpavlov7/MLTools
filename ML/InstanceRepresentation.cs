@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System;
-using System.Linq;
 using static ML.Instances;
 using ML.MathHelpers;
 
@@ -122,7 +121,7 @@ namespace ML
             }
         }
 
-        public float GetValue(int instanceIndex, int featureIndex)
+        public float GetInstanceValue(int instanceIndex, int featureIndex)
         {
             return Instances[instanceIndex].GetValue(_featureMapper[featureIndex]);
         }
@@ -132,87 +131,6 @@ namespace ML
             var r = random.Next(Instances.Count);
 
             return Instances[r].Copy();
-        }
-
-        /// <summary>
-        /// Draws random subset of instances.
-        /// </summary>
-        /// <param name="noReplacement"> 
-        /// It indicates the whether we want sampling with
-        /// or without replacement. The one without replacement
-        /// is way more computationaly intensice.
-        /// </param>
-        public IInstance[] DrawRandomSubset(int subsetSize, Random random, bool noReplacement = true)
-        {
-            var subset = noReplacement
-                ? Instances.ToArray().SampleNoReplacement(subsetSize, random)
-                : Instances.ToArray().SampleReplacement(subsetSize, random);
-
-            return subset;
-        }
-
-        /// <summary>
-        /// Draws random subset of instance values.
-        /// </summary>
-        /// <param name="noReplacement"> 
-        /// It indicates the whether we want sampling with
-        /// or without replacement. The one without replacement
-        /// is way more computationaly intensice.
-        /// </param>
-        public float[,] DrawRandomSubsetValues(int subsetSize, Random random, bool noReplacement = true)
-        {
-            var instanceSubset = noReplacement
-                ? Instances.ToArray().SampleNoReplacement(subsetSize, random)
-                : Instances.ToArray().SampleReplacement(subsetSize, random);
-
-            var values = new float[subsetSize, FeauturesCount];
-
-            for (var i = 0; i < subsetSize; i++)
-            {
-                var instanceValues = instanceSubset[i].GetValues();
-                for (var j = 0; j < FeauturesCount; j++)
-                {
-                    values[i, j] = instanceValues[j];
-                }
-            }
-            return values;
-        }
-
-        public int MinEucDistanceIndex(IInstance targetInstance, IInstance[] instances)
-        {
-            var minDist = double.MaxValue;
-            var minDistIndex = 0;
-
-            for (var i = 0; i < instances.Length; i++)
-            {
-                var dist = targetInstance.L2Dist(instances[i]);
-                if (minDist > dist)
-                {
-                    minDist = dist;
-                    minDistIndex = i;
-                }
-            }
-            return minDistIndex;
-        }
-
-        public int MinEucDistanceIndex(IInstance targetInstance, float[,] values)
-        {
-            var minDist = double.MaxValue;
-            var minDistIndex = 0;
-
-            var valuesCount = values.GetLength(0);
-            var valuesDimCount = values.GetLength(1);
-
-            for (var i = 0; i < valuesCount; i++)
-            {
-                var dist = targetInstance.L2Dist(values, i, valuesDimCount);
-                if (minDist > dist)
-                {
-                    minDist = dist;
-                    minDistIndex = i;
-                }
-            }
-            return minDistIndex;
         }
 
         public void Rescale ()

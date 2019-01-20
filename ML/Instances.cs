@@ -9,7 +9,7 @@ namespace ML
     /// Each implementations has particular algorithms taking advantage
     /// of the sparse and dense structure of the instances.
     /// </summary>
-    public class Instances
+    public static class Instances
     {
         /// <summary>
         /// The 1 * sigma value for Gaussian distribution. Used to convert the
@@ -17,6 +17,60 @@ namespace ML
         /// in case of standardizing the instance.
         /// </summary>
         private const float GaussSigma = 1f;
+
+        public static int MinEucDistanceIndex(IInstance targetInstance, float[,] values)
+        {
+            var minDist = double.MaxValue;
+            var minDistIndex = 0;
+
+            var valuesCount = values.GetLength(0);
+            var valuesDimCount = values.GetLength(1);
+
+            for (var i = 0; i < valuesCount; i++)
+            {
+                var dist = targetInstance.L2Dist(values, i, valuesDimCount);
+                if (minDist > dist)
+                {
+                    minDist = dist;
+                    minDistIndex = i;
+                }
+            }
+            return minDistIndex;
+        }
+
+        public static int MinEucDistanceIndex(IInstance targetInstance, IInstance[] instances)
+        {
+            var minDist = double.MaxValue;
+            var minDistIndex = 0;
+
+            for (var i = 0; i < instances.Length; i++)
+            {
+                var dist = targetInstance.L2Dist(instances[i]);
+                if (minDist > dist)
+                {
+                    minDist = dist;
+                    minDistIndex = i;
+                }
+            }
+            return minDistIndex;
+        }
+
+        public static float[,] ConvertToArray(IInstance[] instances)
+        {
+            var featuresCount = instances[0].Length;
+            var values = new float[instances.Length, featuresCount];
+
+            for (var i = 0; i < instances.Length; i++)
+            {
+                var instanceValues = instances[i].GetValues();
+                for (var j = 0; j < featuresCount; j++)
+                {
+                    values[i, j] = instanceValues[j];
+                }
+            }
+
+            return values;
+        }
 
         public class DenseInstance: IInstance
         {
@@ -161,10 +215,7 @@ namespace ML
 
             public float[] GetValues()
             {
-                var valuesCopy = new float[_values.Length];
-
-                Array.Copy(_values, valuesCopy, valuesCopy.Length);
-                return valuesCopy;
+                return _values;
             }
 
             public float GetValue(int index)

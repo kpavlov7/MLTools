@@ -1,79 +1,97 @@
 ﻿using System;
 using ML.MathHelpers;
 
-namespace ML
+namespace ML.Clustering
 {
     public class SelfOrganizingMap
     {
-        public double InitialLearningRate { get; set; }
-        public ushort[] GridDimensions { get; set; }
+
         public ushort[] BMUCoordinates { get; set; }
-        public int IterationsCount { get; set; }
-        public double InitialNeighbourRadius { get; set; }
-        public float [,] Weights { get; set; }
+        private int FeaturesCount { get; set; }
 
-        public Func<int, double> LearningRate;
-        public Func<int, double> NeighbourhoodRadius;
+        public int _iterationsCount;
+        private ushort[] _gridDimensions;
+        private double _initialNeighbourRadius;
+        private float[,] _weights;
+        private double _initialLearningRate;
 
-        private int _featuresCount { get; set; }
+        /// <summary>
+        /// Indicator whether we should use k-means++ initialization.
+        /// If false we use random initialization.
+        /// </summary>
+        private bool _usePlusPlusInit;
+
+        private readonly Func<int, double> LearningRate;
+        private readonly Func<int, double> NeighbourhoodRadius;
 
         /// <summary>
         /// Random generator seed;
         /// </summary>
         private const int Seed = 12;
+        private Random _random;
 
         public SelfOrganizingMap(
             double initialLearningRate,
             ushort[] gridDimensions,
             int iterationsCount,
-            float initialNeighbourRadius)
+            float initialNeighbourRadius,
+            bool usePlusPlusInit = false)
         {
-            InitialLearningRate = initialLearningRate;
-            IterationsCount = iterationsCount;
-            GridDimensions = gridDimensions;
-            IterationsCount = iterationsCount;
-            InitialNeighbourRadius = initialNeighbourRadius;
+            _initialLearningRate = initialLearningRate;
+            _iterationsCount = iterationsCount;
+            _gridDimensions = gridDimensions;
+            _iterationsCount = iterationsCount;
+            _initialNeighbourRadius = initialNeighbourRadius;
+            _usePlusPlusInit = usePlusPlusInit;
 
             // TODO: provide them as input;
-            LearningRate = t => InitialLearningRate * Math.Exp(t / (double)IterationsCount);
-            NeighbourhoodRadius = t => initialNeighbourRadius * Math.Exp(- t / (double)IterationsCount);
+            LearningRate = t => _initialLearningRate * Math.Exp(t / (double)_iterationsCount);
+            NeighbourhoodRadius = t => initialNeighbourRadius * Math.Exp(- t / (double)_iterationsCount);
+
+            _random = new Random(Seed);
         }
 
         public int[] Train(InstanceRepresentation set)
         {
-            var random = new Random(Seed);
+
 
             set.Standardize();
+            var instances = set.Instances.ToArray();
 
-            Weights = new float[GridDimensions[0] * GridDimensions[1], set.FeauturesCount];
-            _featuresCount = set.FeauturesCount;
+            _weights = new float[_gridDimensions[0] * _gridDimensions[1], set.FeauturesCount];
+            FeaturesCount = set.FeauturesCount;
 
             // Intialize weights with gaussians
-            var n = GridDimensions[0] * GridDimensions[1];
+            var n = _gridDimensions[0] * _gridDimensions[1];
 
-            var k = 0;
-            for (ushort i = 0; i < n; i++)
+            if (!_usePlusPlusInit || n >= instances.Length)
             {
-                for (ushort j = 0; j < _featuresCount; j++)
+                for (ushort i = 0; i < n; i++)
                 {
-                    Weights[i, j] = (float)GaussHelper.InvPhi(random.NextDouble());
-                    k++;
+                    for (ushort j = 0; j < FeaturesCount; j++)
+                    {
+                        _weights[i, j] = (float)GaussHelper.InvPhi(_random.NextDouble());
+                    }
                 }
             }
-
-            for (var i = 0; i < IterationsCount; i++)
+            else
             {
-                var instance = set.DrawRandomInstance(random);
+                _weights = PlusPlusInitializer.InitializeCentroids(n, instances, _random);
+            }
+
+            for (var i = 0; i < _iterationsCount; i++)
+            {
+                var instance = instances[_random.Next(instances.Length)];
                 // Best Matching Unit
-                var bmuIndex = set.MinEucDistanceIndex(instance, Weights);
+                var bmuIndex = Instances.MinEucDistanceIndex(instance, _weights);
                 BMUCoordinates = ToCoordinates(bmuIndex);
                 UpdateHexagonWeights((ushort)NeighbourhoodRadius(i),LearningRate(i), BMUCoordinates, instance.GetValues());
             }
 
-            var instancesClusters = new int[set.Instances.Count];
-            for (var i = 0; i < set.Instances.Count; i++)
+            var instancesClusters = new int[instances.Length];
+            for (var i = 0; i < instances.Length; i++)
             {
-                instancesClusters[i] = set.MinEucDistanceIndex(set.Instances[i], Weights);
+                instancesClusters[i] = Instances.MinEucDistanceIndex(instances[i], _weights);
             }
 
             return instancesClusters;
@@ -81,8 +99,8 @@ namespace ML
 
         public ushort[] ToCoordinates(int index)
         {
-            var y = (ushort)(index % GridDimensions[1]);
-            var x = (ushort)(index / GridDimensions[1]);
+            var y = (ushort)(index % _gridDimensions[1]);
+            var x = (ushort)(index / _gridDimensions[1]);
 
             return new ushort[] {x, y};
         }
@@ -100,15 +118,15 @@ namespace ML
         {
             if(
                 coordinates[0] >= 0 && coordinates[1] >= 0 &&
-                coordinates[0] < GridDimensions[0] && coordinates[1] < GridDimensions[1]
+                coordinates[0] < _gridDimensions[0] && coordinates[1] < _gridDimensions[1]
                 )
             {
-                var bmuIndex = coordinates[0] * (GridDimensions[1] - 1) + coordinates[1];
+                var bmuIndex = coordinates[0] * (_gridDimensions[1] - 1) + coordinates[1];
                 var h = NeighbourhoodFunction(r, lambda, coordinates);
 
-                for (var i = 0; i < _featuresCount; i++)
+                for (var i = 0; i < FeaturesCount; i++)
                 {
-                    Weights[bmuIndex, i] += (float)(lambda * h * (instance[i] - Weights[bmuIndex, i]));
+                    _weights[bmuIndex, i] += (float)(lambda * h * (instance[i] - _weights[bmuIndex, i]));
                 }
             }
 

@@ -1,6 +1,7 @@
 ﻿using Xunit;
 using System.Collections.Generic;
-using static Benchmark.Metrics;
+using static Benchmark.BenchMetrics;
+using ML.Clustering;
 
 namespace ML.tests
 {

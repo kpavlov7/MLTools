@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 
-namespace ML
+namespace Benchmark
 {
-    public class Metrics
+    public class BenchMetrics
     {
-        public enum MetricsType
+        public enum Metrics
         {
             /// <summary>
             /// Ratio of correct classifications
@@ -35,12 +35,12 @@ namespace ML
 
         public class MetricsGenerator
         {
-            private Dictionary<MetricsType, IMetric> _bag;
+            private Dictionary<Metrics, IMetric> _bag;
             private MetricsInput _input;
 
             public MetricsGenerator()
             {
-                _bag = new Dictionary<MetricsType, IMetric>();
+                _bag = new Dictionary<Metrics, IMetric>();
                 _input = new MetricsInput();
             }
 
@@ -57,17 +57,17 @@ namespace ML
                 }
             }
 
-            public void Add(MetricsType metric)
+            public void Add(Metrics metric)
             {
                 switch (metric)
                 {
-                    case MetricsType.Purity:
+                    case Metrics.Purity:
                         _bag.Add(metric, new Purity());
                         break;
                 }
             }
 
-            public double? GetMetric(MetricsType metric)
+            public double? GetMetric(Metrics metric)
             {
                 if (_bag.ContainsKey(metric)) return _bag[metric].Get();
                 else return null;

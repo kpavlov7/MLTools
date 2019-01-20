@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using ML.Clustering;
+using System.Collections.Generic;
 using Xunit;
-using static Benchmark.Metrics;
+using static Benchmark.BenchMetrics;
 
 namespace ML.tests
 {
@@ -31,6 +32,7 @@ namespace ML.tests
             ordinalDenseSet.AddInstance(instance4);
 
             var clustering = new MiniBatchClustering(2, 3, 10);
+            clustering.Train(ordinalDenseSet);
             var categories = clustering.Cluster(ordinalDenseSet);
         }
 
@@ -59,6 +61,7 @@ namespace ML.tests
             ordinalSparseSet.AddInstance(instance4);
 
             var clustering = new MiniBatchClustering(2, 3, 10);
+            clustering.Train(ordinalSparseSet);
             var categories = clustering.Cluster(ordinalSparseSet);
         }
 
@@ -104,6 +107,7 @@ namespace ML.tests
             }
 
             var clustering = new MiniBatchClustering(clusterCount, 100, 2000);
+            clustering.Train(sparseOrdinalSet);
             var categories = clustering.Cluster(sparseOrdinalSet);
 
             var metricsGenerator = new MetricsGenerator();
@@ -159,6 +163,7 @@ namespace ML.tests
             }
 
             var clustering = new MiniBatchClustering(clusterCount, 100, 2000);
+            clustering.Train(denseOrdinalSet);
             var categories = clustering.Cluster(denseOrdinalSet);
 
             var metricsGenerator = new MetricsGenerator();
